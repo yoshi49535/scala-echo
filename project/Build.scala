@@ -8,7 +8,8 @@ object Build extends Build {
   lazy val root = (project in file(""))
     .settings(basicSetting: _*) 
     .aggregate(
-      echoServer
+      echoCore, echoClient, echoServer,
+      echoRemoteClient, echoRemoteServer
     )
     .settings(
       aggregate in update := false
@@ -37,4 +38,20 @@ object Build extends Build {
         compile(libAkkaActor)
     )
     .dependsOn(echoCore)
+
+  lazy val echoRemoteClient = Project("echo-remote-client", file("src/echo/remote/client"))
+    .settings(basicSetting: _*)
+    .settings(
+      libraryDependencies ++=
+        compile(libAkkaRemote)
+    )
+    .dependsOn(echoClient)
+
+  lazy val echoRemoteServer = Project("echo-remote-server", file("src/echo/remote/server"))
+    .settings(basicSetting: _*)
+    .settings(
+      libraryDependencies ++=
+        compile(libAkkaRemote)
+    )
+    .dependsOn(echoServer)
 }
