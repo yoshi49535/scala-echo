@@ -5,7 +5,7 @@ object Build extends Build {
   import BuildSettings._
   import Dependencies._
 
-  lazy val root = (project in file(""))
+  lazy val root = Project("root", file("."))
     .settings(basicSetting: _*) 
     .aggregate(
       echoCore, echoClient, echoServer,
