@@ -1,6 +1,6 @@
 package echo
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorSelection, Props}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import scala.concurrent.{Future, ExecutionContext}
@@ -17,7 +17,7 @@ object ServiceActorLike {
     case class EchoRequest(message:String) extends RequestEvent
     case class EchoResponse(message:String) extends ResponseModel
   }
-  object Protocol extends Protocol 
+  case object Protocol extends Protocol 
 }
 
 trait ServiceActorLike {
@@ -37,6 +37,14 @@ trait ServiceActorLike {
   }
 }
 
+trait ProxyService extends Service {
+  def endpoint : Service
+
+  def echo(message:String)(implicit ec:ExecutionContext) = {
+    endpoint.echo(message)
+  }
+}
+
 object ActorRefService {
   def apply(ref:ActorRef)(implicit ec:ExecutionContext, to:Timeout) = {
     new ActorRefService(ref)
@@ -44,6 +52,25 @@ object ActorRefService {
 }
 
 class ActorRefService(val endpoint:ActorRef)(implicit val ec:ExecutionContext, val actorTimeout:Timeout) extends Service {
+ 
+  val protocol : ServiceActorLike.Protocol = ServiceActorLike.Protocol
+
+  import protocol._
+
+  def echo(message:String)(implicit ec:ExecutionContext) = {
+    (endpoint ? protocol.EchoRequest(message))
+      .mapTo[EchoResponse]
+      .map(r => r.message)
+  }
+}
+
+object ActorSelectionService {
+  def apply(ref:ActorSelection)(implicit ec:ExecutionContext, to:Timeout) = {
+    new ActorSelectionService(ref)
+  }
+}
+
+class ActorSelectionService(val endpoint:ActorSelection)(implicit val ec:ExecutionContext, val actorTimeout:Timeout) extends Service {
  
   val protocol : ServiceActorLike.Protocol = ServiceActorLike.Protocol
 
