@@ -21,7 +21,7 @@ trait ClientServiceImpl extends Service {
 }
 
 object ClientServiceActor {
-  def props(server:ActorRef)(implicit ec:ExecutionContext, to:Timeout) : Props = Props(new ClientServiceActor(ActorService(server)))
+  def props(server:ActorRef)(implicit ec:ExecutionContext, to:Timeout) : Props = Props(new ClientServiceActor(ActorRefService(server)))
   def props(server:Service)(implicit ec:ExecutionContext, to:Timeout) : Props = Props(new ClientServiceActor(server))
 }
 

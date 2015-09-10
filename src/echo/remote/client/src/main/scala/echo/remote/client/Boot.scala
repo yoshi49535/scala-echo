@@ -19,7 +19,7 @@ object Boot extends App {
     val serverSelection = system.actorSelection(config.getString("server.remote"))
     val serverActor = Await.result(serverSelection.resolveOne(), 10.seconds)
 
-    val client = echo.ClientServiceImpl(echo.ActorService(serverActor))
+    val client = echo.ClientServiceImpl(echo.ActorRefService(serverActor))
 
     val res = Await.result(client.echo("test"), 10.seconds)
     println(res)

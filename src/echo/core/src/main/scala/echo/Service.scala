@@ -5,42 +5,53 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import scala.concurrent.{Future, ExecutionContext}
 
-object Protocol {
-  trait Request
-  trait Response 
-
-  case class EchoRequest(message:String) extends Request
-  case class EchoResponse(message:String) extends Response
-}
-
 trait Service {
   def echo(message:String)(implicit ec:ExecutionContext) : Future[String]
+}
+
+object ServiceActorLike {
+  trait Protocol {
+    trait RequestEvent
+    trait ResponseModel
+
+    case class EchoRequest(message:String) extends RequestEvent
+    case class EchoResponse(message:String) extends ResponseModel
+  }
+  object Protocol extends Protocol 
 }
 
 trait ServiceActorLike {
   this:Actor with Service => 
 
+  val protocol : ServiceActorLike.Protocol = ServiceActorLike.Protocol
+  import protocol._
+
   implicit def ec:ExecutionContext
 
   def receive:Receive = {
-    case Protocol.EchoRequest(message) => {
+    case EchoRequest(message) => {
       echo(message)
-        .map(r => Protocol.EchoResponse(r))
+        .map(r => EchoResponse(r))
         .pipeTo(sender)
     }
   }
 }
 
-object ActorService {
+object ActorRefService {
   def apply(ref:ActorRef)(implicit ec:ExecutionContext, to:Timeout) = {
-    new ActorService(ref)
+    new ActorRefService(ref)
   }
 }
 
-class ActorService(val endpoint:ActorRef)(implicit val ec:ExecutionContext, val actorTimeout:Timeout) extends Service {
+class ActorRefService(val endpoint:ActorRef)(implicit val ec:ExecutionContext, val actorTimeout:Timeout) extends Service {
+ 
+  val protocol : ServiceActorLike.Protocol = ServiceActorLike.Protocol
+
+  import protocol._
+
   def echo(message:String)(implicit ec:ExecutionContext) = {
-    (endpoint ? Protocol.EchoRequest(message))
-      .mapTo[Protocol.EchoResponse]
+    (endpoint ? protocol.EchoRequest(message))
+      .mapTo[EchoResponse]
       .map(r => r.message)
   }
 }
