@@ -16,7 +16,7 @@ object DecoratedServiceActorLike {
     case class SetDecorateEvent(prefix:String, postfix:String) extends RequestEvent
     case class SetDeorateResponse() extends ResponseModel
   }
-  object Protocol extends Protocol 
+  case object Protocol extends Protocol 
 }
 
 trait DecoratedServiceActorLike extends ServiceActorLike {
